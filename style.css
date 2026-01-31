@@ -1,122 +1,35 @@
-/*--- 공통 스타일 ---*/
-body {
-    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
-    color: #333;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    background-color: #f8f9fa; /* 기본 업로드 페이지 배경색 */
-}
+/* 기본 설정 */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: sans-serif; background-color: #0b0621; color: white; }
 
-.container {
-    background: white;
-    padding: 30px;
-    border-radius: 12px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    width: 100%;
-    max-width: 500px;
-    text-align: center;
-}
+/* 업로드 페이지 스타일 */
+.upload-body { display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+.upload-container { text-align: center; width: 90%; max-width: 500px; }
+h1 { font-size: 2.5rem; margin-bottom: 2rem; letter-spacing: 2px; }
 
-h1 {
-    color: #2d3436;
-    margin-bottom: 15px;
+.upload-box { margin-bottom: 2rem; }
+.upload-label {
+    display: inline-block;
+    width: 200px; height: 150px;
+    border: 3px solid white; border-radius: 15px;
+    line-height: 150px; cursor: pointer;
+    font-size: 1.2rem; transition: 0.3s;
 }
-p {
-    color: #636e72;
-    margin-bottom: 20px;
-}
+.upload-label:hover { background: rgba(255,255,255,0.1); }
 
-/* 파일 업로드 디자인 */
-#imageInput {
-    margin-bottom: 20px;
-    padding: 10px;
-    border: 2px dashed #0984e3;
-    border-radius: 8px;
-    background: white;
-    cursor: pointer;
-    width: calc(100% - 20px); /* 패딩 고려 */
-    max-width: 400px;
-}
-
-#result-area {
-    margin-top: 20px;
-}
-
-/* 이미지 미리보기 */
-#preview {
-    margin-top: 15px;
-    border-radius: 8px;
-    border: 1px solid #dfe6e9;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    max-width: 100%;
-    height: auto;
-}
-
-/* URL 출력창 */
+.url-box { margin-bottom: 1rem; }
 #urlOutput {
-    width: calc(100% - 24px); /* 패딩 고려 */
-    height: 100px;
-    margin: 10px 0;
-    padding: 12px;
-    border: 1px solid #bdc3c7;
-    border-radius: 6px;
-    background-color: #f1f2f6;
-    font-size: 12px;
-    resize: none;
-    word-break: break-all;
+    width: 100%; height: 60px;
+    background: #1a1535; border: 2px solid white; border-radius: 10px;
+    color: white; padding: 10px; margin-bottom: 10px; resize: none;
+}
+#copyBtn {
+    background: white; color: #0b0621; border: none;
+    padding: 10px 20px; border-radius: 5px; font-weight: bold; cursor: pointer;
 }
 
-/* 버튼 디자인 */
-button {
-    background-color: #0984e3;
-    color: white;
-    border: none;
-    padding: 12px 24px;
-    border-radius: 6px;
-    font-size: 16px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
+#preview { max-width: 100%; border-radius: 10px; margin-top: 20px; }
 
-button:hover {
-    background-color: #74b9ff;
-}
-
-button:active {
-    transform: scale(0.98);
-}
-
-
-/*--- 뷰어 페이지 전용 스타일 ---*/
-body.viewer-page {
-    background-color: #0e0e0e; /* 디스코드 뷰어 배경색 */
-}
-
-#viewer-container {
-    width: 100vw;
-    height: 100vh;
-    display: flex;
-    flex-direction: column; /* 텍스트도 중앙에 오도록 */
-    align-items: center;
-    justify-content: center;
-    position: relative; /* 로딩 텍스트 위치용 */
-}
-
-#viewer-img {
-    max-width: 95%;
-    max-height: 95%;
-    object-fit: contain;
-    box-shadow: 0 0 20px rgba(0,0,0,0.5);
-    display: none; /* 초기에는 숨김 */
-}
-
-#loading-text {
-    color: #b2bec3;
-    font-size: 18px;
-    display: block; /* 초기에는 표시 */
-}
+/* 뷰어 페이지 스타일 (디스코드 스타일) */
+.viewer-body { background: #0e0e0e; display: flex; justify-content: center; align-items: center; height: 100vh; }
+#viewerImg { max-width: 95%; max-height: 95%; object-fit: contain; }
