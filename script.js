@@ -1,107 +1,54 @@
-// ===========================================
-//       공통 함수: LZ-String 압축/해제
-// ===========================================
-
-/**
- * Base64 문자열을 LZ-String으로 압축하여 URL에 안전한 형태로 반환합니다.
- * @param {string} base64String - 원본 Base64 데이터
- * @returns {string} 압축된 문자열
- */
-function compressData(base64String) {
-    return LZString.compressToEncodedURIComponent(base64String);
-}
-
-/**
- * URL에서 압축된 데이터를 읽어 Base64 문자열로 해제합니다.
- * @param {string} compressedData - 압축된 문자열
- * @returns {string | null} 해제된 Base64 문자열 또는 null
- */
-function decompressData(compressedData) {
-    if (!compressedData) return null;
-    try {
-        const decompressed = LZString.decompressFromEncodedURIComponent(compressedData);
-        // 유효한 Base64 이미지 데이터인지 간단히 확인
-        if (decompressed && decompressed.startsWith('data:image')) {
-            return decompressed;
-        }
-    } catch (e) {
-        console.error("데이터 압축 해제 오류:", e);
-    }
-    return null;
-}
-
-/**
- * URL 복사 함수 (navigator.clipboard 사용)
- */
-function copyURL() {
-    const urlOutput = document.getElementById('urlOutput');
-    if (urlOutput) {
-        urlOutput.select();
-        navigator.clipboard.writeText(urlOutput.value).then(() => {
-            alert('URL이 클립보드에 복사되었습니다!');
-        }).catch(err => {
-            console.error('URL 복사 실패:', err);
-            alert('URL 복사에 실패했습니다. 수동으로 복사해주세요.');
-        });
-    }
-}
-
-// ===========================================
-//       업로드 페이지 전용 로직
-// ===========================================
-if (document.body.classList.contains('upload-page')) {
-    const imageInput = document.getElementById('imageInput');
-    const preview = document.getElementById('preview');
-    const urlOutput = document.getElementById('urlOutput');
-
-    imageInput.addEventListener('change', (e) => {
+// 업로드 로직 (index.html에서 작동)
+const imageInput = document.getElementById('imageInput');
+if (imageInput) {
+    imageInput.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (!file) return;
 
         const reader = new FileReader();
-        reader.onload = (event) => {
-            const base64String = event.target.result;
-            const compressed = compressData(base64String);
+        reader.onload = function(event) {
+            const base64 = event.target.result;
+            // 데이터를 압축
+            const compressed = LZString.compressToEncodedURIComponent(base64);
             
-            // 뷰어 페이지로 연결되는 URL 생성: /view.html#<압축데이터>
-            const viewPageURL = window.location.origin + window.location.pathname.replace('upload.html', 'view.html') + '#' + compressed;
+            // 뷰어 페이지 경로 생성 (GitHub 주소 기준)
+            const viewURL = window.location.origin + window.location.pathname.replace('index.html', '') + 'view.html#' + compressed;
             
-            urlOutput.value = viewPageURL;
-            preview.src = base64String;
-            preview.style.display = 'block';
+            // 결과창 표시
+            document.getElementById('urlOutput').value = viewURL;
+            document.getElementById('preview').src = base64;
+            document.getElementById('resultArea').style.display = 'block';
         };
         reader.readAsDataURL(file);
     });
 }
 
-// ===========================================
-//       뷰어 페이지 전용 로직
-// ===========================================
-if (document.body.classList.contains('viewer-page')) {
-    const viewerImg = document.getElementById('viewer-img');
-    const loadingText = document.getElementById('loading-text');
+// 뷰어 로드 로직 (view.html에서 작동)
+window.addEventListener('load', function() {
+    const viewerImg = document.getElementById('viewerImg');
+    if (!viewerImg) return;
 
-    // 페이지 로드 시 또는 URL 해시 변경 시 이미지 표시
-    const displayImage = () => {
-        const hash = window.location.hash.substring(1); // '#' 제거
-        const decompressed = decompressData(hash);
-        
-        if (decompressed) {
-            viewerImg.src = decompressed;
-            viewerImg.onload = () => {
-                loadingText.style.display = 'none'; // 로딩 텍스트 숨김
-                viewerImg.style.display = 'block'; // 이미지 표시
-            };
-            viewerImg.onerror = () => {
-                loadingText.textContent = "이미지를 불러오는 데 실패했습니다.";
-                loadingText.style.color = "#ff7675";
+    const hash = window.location.hash.substring(1);
+    if (hash) {
+        try {
+            const decompressed = LZString.decompressFromEncodedURIComponent(hash);
+            if (decompressed) {
+                viewerImg.src = decompressed;
+                viewerImg.style.display = 'block';
+                document.getElementById('statusText').style.display = 'none';
             }
-        } else {
-            loadingText.textContent = "유효한 이미지 데이터가 없습니다.";
-            loadingText.style.color = "#ff7675";
+        } catch (e) {
+            document.getElementById('statusText').innerText = "이미지 복구에 실패했습니다.";
         }
-    };
+    } else {
+        document.getElementById('statusText').innerText = "공유된 이미지가 없습니다.";
+    }
+});
 
-    window.addEventListener('load', displayImage);
-    window.addEventListener('hashchange', displayImage); // URL 해시 변경 감지
+// 복사 함수
+function copyURL() {
+    const copyText = document.getElementById("urlOutput");
+    copyText.select();
+    navigator.clipboard.writeText(copyText.value);
+    alert("URL이 복사되었습니다!");
 }
