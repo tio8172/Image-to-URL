@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>이미지 URL 업로더</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="upload-page">
+    <div class="container">
+        <h1>이미지 URL 공유기</h1>
+        <p>이미지를 업로드하여 공유 가능한 링크를 생성하세요.</p>
+        <input type="file" id="imageInput" accept="image/*">
+        
+        <div id="result-area">
+            <img id="preview" src="" style="display:none;">
+            <p>공유 URL:</p>
+            <textarea id="urlOutput" readonly></textarea>
+            <button onclick="copyURL()">URL 복사</button>
+        </div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
