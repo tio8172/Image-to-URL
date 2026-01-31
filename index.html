@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image to URL - Upload</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="upload-body">
+    <div class="upload-container">
+        <h1>IMAGE to URL</h1>
+        <div class="upload-box">
+            <input type="file" id="imageInput" accept="image/*" hidden>
+            <label for="imageInput" class="upload-label">
+                <span>upload image</span>
+            </label>
+        </div>
+        
+        <div id="resultArea" style="display: none;">
+            <div class="url-box">
+                <textarea id="urlOutput" readonly></textarea>
+                <button id="copyBtn" onclick="copyURL()">copy url</button>
+            </div>
+            <img id="preview" src="" alt="미리보기">
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
