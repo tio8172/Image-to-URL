@@ -2,17 +2,19 @@ const imageInput = document.getElementById('imageInput');
 const preview = document.getElementById('preview');
 const urlOutput = document.getElementById('urlOutput');
 
-// 1. 이미지를 선택하면 실행
+// 1. 이미지 선택 시: 압축하여 URL 생성
 imageInput.addEventListener('change', (e) => {
     const file = e.target.files[0];
-    const reader = new FileReader();
+    if (!file) return;
 
-    reader.onload = () => {
-        const base64String = reader.result;
-        // 데이터 압축 (URL 길이를 줄이기 위함)
+    const reader = new FileReader();
+    reader.onload = (event) => {
+        const base64String = event.target.result;
+        
+        // LZ-String을 이용한 고강도 압축 (URL safe)
         const compressed = LZString.compressToEncodedURIComponent(base64String);
         
-        // 현재 페이지 주소 뒤에 압축 데이터 붙이기
+        // # 뒤에 압축 데이터를 붙여서 URL 생성
         const shareURL = window.location.origin + window.location.pathname + '#' + compressed;
         
         urlOutput.value = shareURL;
@@ -22,22 +24,37 @@ imageInput.addEventListener('change', (e) => {
     reader.readAsDataURL(file);
 });
 
-// 2. 페이지 로드 시 URL에 데이터가 있는지 확인
-window.onload = () => {
+// 2. 페이지 로드 시 또는 URL 변경 시: 데이터 복구 및 이미지 출력
+function decodeImageFromURL() {
+    // URL에서 # 뒷부분 가져오기
     const hash = window.location.hash.substring(1);
+    
     if (hash) {
-        // 압축 해제 후 이미지 복구
-        const decompressed = LZString.decompressFromEncodedURIComponent(hash);
-        if (decompressed) {
-            preview.src = decompressed;
-            preview.style.display = 'block';
-            urlOutput.value = window.location.href;
+        try {
+            // 압축 해제
+            const decompressed = LZString.decompressFromEncodedURIComponent(hash);
+            
+            if (decompressed && decompressed.startsWith('data:image')) {
+                preview.src = decompressed;
+                preview.style.display = 'block';
+                urlOutput.value = window.location.href;
+            } else {
+                alert("이미지 데이터를 불러올 수 없습니다. URL이 올바르지 않거나 너무 깁니다.");
+            }
+        } catch (error) {
+            console.error("Decoding error:", error);
         }
     }
-};
+}
+
+// 페이지가 처음 로드될 때 실행
+window.addEventListener('load', decodeImageFromURL);
+// 사용자가 주소창에 새 URL을 붙여넣고 엔터를 쳤을 때(hash가 바뀔 때) 실행
+window.addEventListener('hashchange', decodeImageFromURL);
 
 function copyURL() {
     urlOutput.select();
-    document.execCommand('copy');
-    alert('URL이 복사되었습니다!');
+    navigator.clipboard.writeText(urlOutput.value).then(() => {
+        alert('URL이 복사되었습니다!');
+    });
 }
