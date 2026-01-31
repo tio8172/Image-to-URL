@@ -1,96 +1,170 @@
-const imageInput = document.getElementById('imageInput');
-const urlOutput = document.getElementById('urlOutput');
-const preview = document.getElementById('preview');
-const resultArea = document.getElementById('resultArea');
-const viewerImg = document.getElementById('viewerImg');
-const statusText = document.getElementById('statusText');
-const toast = document.getElementById('toast');
+let currentImg = null;
 
-// 업로드 로직
-if (imageInput) {
-    imageInput.addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = (event) => {
-            const img = new Image();
-            img.src = event.target.result;
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-
-                // 스마트 스케일링 (해상도 유지 정책)
-                const MAX_SIZE = 1700; 
-                let width = img.width;
-                let height = img.height;
-
-                if (width > MAX_SIZE || height > MAX_SIZE) {
-                    const ratio = Math.min(MAX_SIZE / width, MAX_SIZE / height);
-                    width = Math.round(width * ratio);
-                    height = Math.round(height * ratio);
-                }
-
-                canvas.width = width;
-                canvas.height = height;
-
-                // 선명도 최적화 설정
-                ctx.imageSmoothingEnabled = true;
-                ctx.imageSmoothingQuality = 'high';
-
-                ctx.drawImage(img, 0, 0, width, height); 
-
-                // [핵심] JPEG 대신 WebP 사용, 화질은 0.85 정도로 타협 (육안상 무손실 수준)
-                // 1.0은 데이터 팽창이 너무 심하므로 0.85~0.9를 강력 추천합니다.
-                let optimizedData = canvas.toDataURL('image/webp', 0.85);
-
-                // 만약 브라우저가 WebP를 지원하지 않으면 JPEG로 백업
-                if (optimizedData.length < 100) {
-                    optimizedData = canvas.toDataURL('image/jpeg', 0.85);
-                }
-
-                const compressed = LZString.compressToEncodedURIComponent(optimizedData);
-                
-                // UI 업데이트 로직
-                const currentURL = window.location.href.split('#')[0];
-                const directory = currentURL.substring(0, currentURL.lastIndexOf('/'));
-                
-                urlOutput.value = directory + '/view.html#' + compressed;
-                preview.src = optimizedData;
-                resultArea.style.display = 'block';
-            };
-        };
-    });
-}
-
-// Viewer Logic Update
-if (viewerImg) {
-    const decode = () => {
-        const hash = window.location.hash.substring(1);
-        if (hash) {
-            try {
-                const data = LZString.decompressFromEncodedURIComponent(hash);
-                if (data) {
-                    viewerImg.src = data;
-                    viewerImg.style.display = 'block';
-                    if (statusText) statusText.style.display = 'none';
-                }
-            } catch (e) {
-                if (statusText) statusText.innerText = "Error: Failed to decode image.";
+const Base91 = {
+    alphabet: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!#$%&()*+,-./:;<=>?@[]^_`{|}~\"",
+    encode: function(data) {
+        let n = 0, b = 0, res = "";
+        for (let i = 0; i < data.length; i++) {
+            b |= (data[i] & 255) << n; n += 8;
+            if (n > 13) {
+                let v = b & 8191;
+                if (v > 88) { b >>= 13; n -= 13; } 
+                else { v = b & 16383; b >>= 14; n -= 14; }
+                res += this.alphabet[v % 91] + this.alphabet[Math.floor(v / 91)];
             }
         }
-    };
-    window.onload = decode;
-    viewerImg.onclick = () => viewerImg.classList.toggle('zoomed');
+        if (n > 0) { res += this.alphabet[b % 91]; if (n > 7 || b > 90) res += this.alphabet[Math.floor(b / 91)]; }
+        return res;
+    },
+    decode: function(str) {
+        let v = -1, b = 0, n = 0, out = [];
+        for (let i = 0; i < str.length; i++) {
+            let c = this.alphabet.indexOf(str[i]);
+            if (c === -1) continue;
+            if (v < 0) { v = c; } 
+            else {
+                v += c * 91; b |= v << n; n += (v & 8191) > 88 ? 13 : 14;
+                while (n >= 8) { out.push(b & 255); b >>= 8; n -= 8; }
+                v = -1;
+            }
+        }
+        if (v > -1) out.push((b | v << n) & 255);
+        return new Uint8Array(out);
+    }
+};
+
+const App = {
+    async compress(str) {
+        const stream = new Blob([str]).stream().pipeThrough(new CompressionStream("gzip"));
+        return new Uint8Array(await new Response(stream).arrayBuffer());
+    },
+    async decompress(uint8) {
+        const stream = new Blob([uint8]).stream().pipeThrough(new DecompressionStream("gzip"));
+        return new Response(stream).text();
+    }
+};
+
+async function updateSettings() {
+    const q = document.getElementById('qualityInput').value;
+    document.getElementById('qualityVal').innerText = q;
+    if (currentImg) await processImage(currentImg);
 }
 
+async function handleFile(file) {
+    if (!file || !file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const img = new Image();
+        img.src = e.target.result;
+        img.onload = async () => {
+            currentImg = img;
+            await processImage(img);
+            document.body.classList.add('uploaded');
+            document.getElementById('resultArea').style.display = 'block';
+        };
+    };
+    reader.readAsDataURL(file);
+}
 
-// 복사 함수 (토스트 알림)
+async function processImage(img) {
+    const maxWidth = parseInt(document.getElementById('maxWidthInput').value) || 0;
+    const maxHeight = parseInt(document.getElementById('maxHeightInput').value) || 0;
+    const quality = parseFloat(document.getElementById('qualityInput').value) || 0.7;
+
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    let w = img.width, h = img.height;
+    let ratio = 1;
+    if (maxWidth > 0 && w > maxWidth) ratio = Math.min(ratio, maxWidth / w);
+    if (maxHeight > 0 && h > maxHeight) ratio = Math.min(ratio, maxHeight / h);
+
+    canvas.width = w * ratio; canvas.height = h * ratio;
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+    const webpData = canvas.toDataURL('image/webp', quality);
+    const compressed = await App.compress(webpData);
+    const hash = Base91.encode(compressed);
+
+    const finalURL = window.location.origin + window.location.pathname.replace('index.html', '') + 'view.html#' + encodeURIComponent(hash);
+    document.getElementById('urlOutput').value = finalURL;
+    document.getElementById('urlOutputDisplay').innerText = finalURL;
+    document.getElementById('preview').src = webpData;
+}
+
 function copyURL() {
-    if (!urlOutput.value) return;
-    navigator.clipboard.writeText(urlOutput.value).then(() => {
+    const val = document.getElementById('urlOutput').value;
+    navigator.clipboard.writeText(val).then(() => {
+        const toast = document.getElementById('toast');
         toast.classList.add('show');
         setTimeout(() => toast.classList.remove('show'), 2000);
     });
+}
+
+async function runViewer() {
+    const hashStr = window.location.hash.substring(1);
+    const statusText = document.getElementById('statusText');
+    const statusContainer = document.getElementById('statusContainer');
+    const img = document.getElementById('viewerImg');
+
+    if (!hashStr) {
+        if (statusText) statusText.innerText = "No data found.";
+        return;
+    }
+
+    try {
+        const decoded = Base91.decode(decodeURIComponent(hashStr));
+        const webpData = await App.decompress(decoded);
+        if (img) {
+            img.src = webpData;
+            img.onload = () => {
+                img.style.display = 'block';
+                if (statusContainer) statusContainer.style.display = 'none';
+            };
+        }
+    } catch (e) {
+        if (statusText) {
+            statusText.innerText = "Invalid or Corrupted URL.";
+            statusText.style.color = "#808080";
+        }s
+    }
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+    if (document.getElementById('viewerImg')) runViewer();
+    const input = document.getElementById('imageInput');
+    if (input) {
+        input.onchange = (e) => handleFile(e.target.files[0]);
+        window.addEventListener('dragover', (e) => e.preventDefault());
+        window.addEventListener('drop', (e) => {
+            e.preventDefault();
+            if (e.dataTransfer.files.length > 0) handleFile(e.dataTransfer.files[0]);
+        });
+    }
+});
+
+
+async function handleFile(file) {
+    if (!file || !file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const img = new Image();
+        img.src = e.target.result;
+        img.onload = async () => {
+            currentImg = img;
+            await processImage(img);
+            
+            document.body.classList.add('uploaded');
+            
+            const resultArea = document.getElementById('resultArea');
+            resultArea.style.display = 'block';
+
+            setTimeout(() => {
+                resultArea.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'center'
+                });
+            }, 100);
+        };
+    };
+    reader.readAsDataURL(file);
 }

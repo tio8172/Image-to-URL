@@ -1,178 +1,232 @@
-/* 현대적인 Inter 폰트 임포트 */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
 
-/* --- [공통] 기본 초기화 --- */
-* { 
-    margin: 0; 
-    padding: 0; 
-    box-sizing: border-box; 
-}
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
-body {
+body.upload-body {
     font-family: 'Inter', sans-serif;
     color: white;
-    min-height: 100vh;
-}
-
-/* --- [메인 페이지] 업로드 화면 스타일 --- */
-.upload-body {
+    min-height: 110vh;
     display: flex;
     justify-content: center;
     align-items: center;
-    /* 블루 to 퍼플 대각선 그라데이션 */
-    background: linear-gradient(135deg, #1a4a9e 0%, #0b0621 50%, #5d1451 100%);
+    background: linear-gradient(135deg, #002158 0%, #280d41 50%, #380930 100%);
     background-attachment: fixed;
     position: relative;
     overflow-x: hidden;
 }
 
-/* 메인 배경 보케 효과 */
-.upload-body::before {
-    content: "";
+body.upload-body.uploaded { align-items: flex-start; padding-top: 50px; }
+
+body.viewer-only-body {
+    background-color: #000 !important;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    overflow: show;
+    font-family: 'Inter', sans-serif;
+}
+
+.status-overlay {
     position: fixed;
-    top: 0; left: 0;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 100;
+}
+
+#statusText {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 1rem;
+    letter-spacing: 1px;
+}
+
+.viewer-container {
     width: 100%; height: 100%;
-    background: 
-        radial-gradient(circle at 20% 30%, rgba(0, 255, 204, 0.12) 0%, transparent 40%),
-        radial-gradient(circle at 80% 70%, rgba(212, 0, 255, 0.18) 0%, transparent 40%);
-    z-index: -1;
+    display: flex; justify-content: center; align-items: center;
+}
+
+#viewerImg {
+    max-width: 500vw;
+    max-height: 500vh;
+    object-fit: contain;
 }
 
 .main-container {
     width: 100%;
-    max-width: 1000px;
+    max-width: 900px;
     text-align: center;
     z-index: 10;
     padding: 20px;
 }
 
 .logo {
-    font-size: 4rem;
+    font-size: 3.5rem;
     font-weight: 900;
-    margin-bottom: 80px; /* 로고와 버튼 사이 간격 */
-    letter-spacing: -2px;
+    margin-bottom: 40px;
     background: linear-gradient(to bottom, #ffffff, #a0ccff);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
-    filter: drop-shadow(0 0 20px rgba(160, 204, 255, 0.3));
 }
 
 .upload-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 15px; /* 아이콘과 텍스트 일직선 정렬 간격 */
-    padding: 20px 60px;
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    display: inline-block;
+    padding: 15px 40px;
     border-radius: 60px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
     background: rgba(255, 255, 255, 0.08);
     backdrop-filter: blur(15px);
     color: white;
-    font-size: 1.2rem;
     font-weight: 700;
-    text-transform: uppercase;
     cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: 0.3s;
 }
 
-.upload-btn:hover {
-    background: rgba(255, 255, 255, 0.15);
-    border-color: #00ffcc;
-    box-shadow: 0 0 30px rgba(0, 255, 204, 0.4);
-    transform: translateY(-3px) scale(1.02);
-}
-
-.btn-icon {
-    width: 28px;
-    height: 28px;
-    display: block;
-    flex-shrink: 0;
-}
-
-/* 결과 카드 */
-.result-card {
-    margin-top: 60px;
-    background: rgba(255, 255, 255, 0.04);
+.settings-bar-horizontal {
+    margin: 30px auto;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 15px 25px;
+    border-radius: 20px;
     border: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+}
+
+.setting-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+}
+
+.setting-item input[type="number"] {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #00ffcc;
+    padding: 5px;
+    border-radius: 6px;
+    width: 75px;
+    text-align: center;
+    outline: none;
+}
+
+.setting-item input[type="range"] {
+    width: 120px;
+    accent-color: #00ffcc;
+    cursor: pointer;
+}
+
+.setting-hint {
+    width: 100%;
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.result-card {
+    margin-top: 40px;
+    background: rgba(255, 255, 255, 0.04);
+    padding: 40px;
     border-radius: 40px;
-    padding: 50px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(30px);
-    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.5);
 }
 
 .preview-container {
-    max-height: 600px;
-    border-radius: 24px;
-    overflow: hidden;
-    margin-bottom: 40px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    background: #000000;
+    display: flex;
+    justify-content: center;
+    margin-bottom: 30px;
 }
 
-.preview-container img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    display: block;
+#preview {
+    max-width: 100%;
+    max-height: 400px;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
 }
 
-.copy-box {
+.copy-box-full {
     background: rgba(0, 0, 0, 0.4);
     padding: 25px;
-    border-radius: 20px;
+    border-radius: 25px;
     border: 1px solid rgba(0, 255, 204, 0.2);
     cursor: pointer;
+    transition: 0.2s;
 }
 
-#urlOutput {
-    width: 100%;
-    background: none;
-    border: none;
-    color: #00ffcc;
-    text-align: center;
-    font-family: 'Monaco', monospace;
-    font-size: 1.1rem;
+.copy-box-full:hover {
+    border-color: #00ffcc;
+    background: rgba(0, 0, 0, 0.6);
+}
+
+.url-display-text {
+    font-size: 0.7rem;
+    color: rgba(0, 255, 204, 0.5);
+    margin-bottom: 8px;
+    overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
-/* --- [뷰어 페이지] 이미지 보기 화면 스타일 --- */
-.viewer-body {
-    background-color: #000000; /* 딥 블랙 배경 */
-    height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: auto;
-}
-
-#viewerImg {
-    margin: auto;
-    display: block;
-    object-fit: auto;
-    cursor: zoom-in;
-    box-shadow: 0 0 50px rgba(0, 0, 0, 0.8);
-}
-
-#viewerImg.zoomed {
-    max-width: none !important;
-    max-height: none !important;
-    width: auto !important;
-    height: auto !important;
-    cursor: zoom-out;
-}
-
-/* --- [기타] 공통 컴포넌트 --- */
-.toast {
-    position: fixed; bottom: -80px; left: 50%; transform: translateX(-50%);
-    background: #00ffcc; color: #0b0621; padding: 18px 50px;
-    border-radius: 50px; font-weight: 800; transition: 0.5s;
-    opacity: 0; z-index: 9999;
-}
-.toast.show { bottom: 60px; opacity: 1; }
-
-.status-msg {
-    color: #444;
+.copy-main-text {
     font-size: 1.2rem;
+    font-weight: 800;
+    color: white;
+}
+
+.toast {
+    position: fixed;
+    bottom: -80px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #00ffcc;
+    color: #0b0621;
+    padding: 15px 40px;
+    border-radius: 50px;
+    font-weight: 800;
+    transition: 0.4s;
+    z-index: 1000;
+}
+
+.toast.show {
+    bottom: 40px;
+}
+
+.main-container {
+    width: 100%;
+    max-width: 900px;
     text-align: center;
+    z-index: 10;
+    padding: 20px;
+    margin-bottom: 100px; 
+}
+
+body.upload-body.uploaded { 
+    align-items: flex-start; 
+    padding-top: 50px; 
+    padding-bottom: 50px; 
+}
+
+.result-card {
+    margin-top: 40px;
+    background: rgba(255, 255, 255, 0.04);
+    padding: 40px;
+    border-radius: 40px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(30px);
+    animation: fadeIn 1.0s ease-out;
+}
+
+@keyframes fadeIn {
+    from { 
+        opacity: 0; 
+        transform: translateY(30px);
+    }
+    to { 
+        opacity: 1; 
+        transform: translateY(0); 
+    }
 }

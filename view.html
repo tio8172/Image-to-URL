@@ -1,16 +1,19 @@
 <!DOCTYPE html>
-<html lang="en" style="height: 100%;">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, minimum-scale=0.1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Image Viewer</title>
     <link rel="stylesheet" href="style.css">
 </head>
-<body class="viewer-body">
-    <img id="viewerImg" src="" style="display: none;">
-    <p id="statusText" class="status-msg">Decoding image...</p>
+<body class="viewer-only-body">
+    <div id="statusContainer" class="status-overlay">
+        <p id="statusText">Decoding image data...</p>
+    </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
+    <div class="viewer-container">
+        <img id="viewerImg" src="" alt="Decoded Image" style="display: none;">
+    </div>
     <script src="script.js"></script>
 </body>
 </html>
