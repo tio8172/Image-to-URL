@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>Image to URL Share</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>이미지 URL 공유기</h1>
+    <input type="file" id="imageInput" accept="image/*">
+    <div id="result">
+        <img id="preview" src="" style="display:none; max-width: 300px;">
+        <p>공유 URL:</p>
+        <textarea id="urlOutput" readonly></textarea>
+        <button onclick="copyURL()">URL 복사</button>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
