@@ -17,7 +17,7 @@ const Base91 = {
         if (n > 0) { res += this.alphabet[b % 91]; if (n > 7 || b > 90) res += this.alphabet[Math.floor(b / 91)]; }
         return res;
     },
-    // 추가된 디코딩 로직
+
     decode: function(str) {
         let v = -1, b = 0, n = 0, out = [];
         for (let i = 0; i < str.length; i++) {
@@ -40,14 +40,14 @@ const App = {
         const stream = new Blob([data]).stream().pipeThrough(new CompressionStream("gzip"));
         return new Uint8Array(await new Response(stream).arrayBuffer());
     },
-    // 추가된 압축 해제 로직
+    
     async decompressBinary(uint8) {
         const stream = new Blob([uint8]).stream().pipeThrough(new DecompressionStream("gzip"));
         return new Uint8Array(await new Response(stream).arrayBuffer());
     }
 };
 
-// --- 인코딩 및 설정 관련 함수 ---
+
 async function updateSettings() {
     const q = document.getElementById('qualityInput').value;
     const qDisplay = document.getElementById('qualityVal');
@@ -101,13 +101,12 @@ async function processImage(img) {
         }
     }, 'image/avif', quality);
 
-    // script.js 내의 finalize 함수를 아래와 같이 수정하세요
+
     async function finalize(blob) {
         if (!blob) return;
         const arrayBuffer = await blob.arrayBuffer();
         const compressed = await App.compressBinary(new Uint8Array(arrayBuffer));
         const hash = Base91.encode(compressed);
-
         const baseUrl = window.location.origin + window.location.pathname.replace('index.html', '');
         const params = `?n=${encodeURIComponent(fileMeta.name)}&f=${encodeURIComponent(fileMeta.ext)}`;
         const finalURL = `${baseUrl}view.html${params}#${encodeURIComponent(hash)}`;
@@ -115,10 +114,8 @@ async function processImage(img) {
         document.getElementById('urlOutput').value = finalURL;
         document.getElementById('urlOutputDisplay').innerText = finalURL;
 
-        // --- 링크 길이 경고 로직 추가 ---
         const warningElement = document.getElementById('urlWarning');
         if (warningElement) {
-            // 일반적인 브라우저 안전 한계인 2000자를 기준으로 설정
             if (finalURL.length > 100000) {
                 warningElement.classList.add('show');
                 warningElement.innerHTML = `⚠️ <b>Warning:</b> The link is too long (${finalURL.length} chars). It may not work in some environments. Please reduce the quality or resolution.`;
@@ -126,7 +123,6 @@ async function processImage(img) {
                 warningElement.classList.remove('show');
             }
         }
-        // ------------------------------------------
 
         const preview = document.getElementById('preview');
         if (preview.src) URL.revokeObjectURL(preview.src);
@@ -134,7 +130,6 @@ async function processImage(img) {
     }
 }
 
-// --- 추가된 뷰어 디코딩 실행 함수 ---
 async function runViewer() {
     const hashStr = window.location.hash.substring(1);
     if (!hashStr) return;
@@ -144,11 +139,8 @@ async function runViewer() {
     const fileExt = params.get('f') || "png";
 
     try {
-        // 1. Base91 디코딩
         const decoded = Base91.decode(decodeURIComponent(hashStr));
-        // 2. Gzip 압축 해제
         const decompressed = await App.decompressBinary(decoded);
-        // 3. Blob 생성 및 URL 변환
         const blob = new Blob([decompressed]);
         const imgUrl = URL.createObjectURL(blob);
         
@@ -158,8 +150,7 @@ async function runViewer() {
             img.onload = () => {
                 img.style.display = 'block';
                 document.getElementById('statusContainer').style.display = 'none';
-                
-                // 다운로드 버튼 설정
+            
                 const downloadBtn = document.getElementById('downloadBtn');
                 if (downloadBtn) {
                     downloadBtn.style.display = 'block';
@@ -187,13 +178,10 @@ function copyURL() {
     });
 }
 
-// 페이지 로드 시 인덱스 페이지인지 뷰어 페이지인지 확인하여 실행
 window.addEventListener('DOMContentLoaded', () => {
-    // 뷰어 페이지(viewerImg 요소가 있는 경우)라면 디코딩 실행
     if (document.getElementById('viewerImg')) {
         runViewer();
     } else {
-        // 업로드 페이지 로직
         const input = document.getElementById('imageInput');
         if (input) {
             input.onchange = (e) => handleFile(e.target.files[0]);
@@ -218,4 +206,5 @@ window.addEventListener('DOMContentLoaded', () => {
         }
     }
 });
+
 
